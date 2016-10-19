@@ -1,0 +1,45 @@
+{
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "KEY",
+      "secret_key": "SECRET",
+      "communicator": "ssh" ,
+      "ssh_pty" : true,
+      "region": "us-west-2",
+      "source_ami": "ami-d2c924b2",
+      "instance_type": "t2.micro",
+      "ssh_username": "centos",
+      "ami_name": "packer {{timestamp}}",
+      "launch_block_device_mappings": [{
+      "device_name": "/dev/sda1",
+      "delete_on_termination": true
+       }]
+    }
+  ],
+      "provisioners": [
+          {
+              "type": "shell",
+              "execute_command": "echo 'vagrant' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+              "inline": [
+                  "sleep 30",
+                  "rpm -iUvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm",
+                  "yum -y update",
+                  "yum -y install ansible",
+                  "ansible --version"
+              ]
+          },
+
+          {
+              "type": "ansible-local",
+              "playbook_file": "../ansible/playbook.yml",
+              "role_paths": [
+                  "../ansible/roles/aws",
+                  "../ansible/roles/common",
+                  "../ansible/roles/drupal",
+                  "../ansible/roles/php",
+                  "../ansible/roles/httpd"
+              ]
+          }
+      ]
+  }

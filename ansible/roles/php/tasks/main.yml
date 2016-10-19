@@ -1,0 +1,71 @@
+---
+  - name: bootstrap epel-release install
+    copy: src=roles/php/templates/ansible-bootstrap-epel.repo
+          dest=/etc/yum.repos.d/
+          owner=root group=root mode=0644
+
+  - name: epel-release install
+    yum: name=epel-release
+          enablerepo=ansible-bootstrap-epel
+          state=present
+
+  - name: epel repository enable
+    ini_file: dest=/etc/yum.repos.d/epel.repo
+          section=epel
+          option=enabled
+          value=1
+
+  - name: webstatic repo
+    copy: src=roles/php/templates/ansible-webstatic.repo
+          dest=/etc/yum.repos.d/
+          owner=root group=root mode=0644
+
+  - name: Install PHP Packages
+    register: phpinstalled
+    yum: name={{ item }} update_cache=yes state=latest
+    with_items:
+      - php70w
+      - php70w-devel
+      - php70w-pecl-zendopcache
+      - php70w-mbstring
+      - php70w-xml
+      - php70w-mysql
+      - php70w-gd
+      - php70w-pdo
+      - libmcrypt-devel
+      - libmcrypt
+      - php70w-mcrypt
+      - composer
+      - git
+      - php-pear
+      - memcached
+      - zlib-devel
+      - libmemcached-devel
+      - pv
+      - gcc
+
+  - name: Installing custom php.ini
+    when: phpinstalled|success
+    copy: src=php.ini dest=/etc/php.ini
+
+  - name: Memcached php extension install script
+    copy: src=roles/php/templates/memcache.sh dest=/usr/local/bin owner=root group=root mode=0777
+
+  - name: Install Memcache php extension
+    command: /usr/local/bin/memcache.sh
+    become: true
+    become_user: root
+
+  - name: upload progress php extension install script
+    copy: src=roles/php/templates/uploadprogress.sh dest=/usr/local/bin owner=root group=root mode=0777
+
+  - name: Install upload progress php extension
+    command: /usr/local/bin/uploadprogress.sh
+    become: true
+    become_user: root
+
+  - name: Ensure Memcached is started
+    service: name=memcached state=started enabled=yes
+
+  - name: Ensure Apache is reloaded
+    service: name=httpd state=reloaded enabled=yes

@@ -1,0 +1,46 @@
+---
+# Commented out since SF variables are hardcoded into settings.php
+#  - name: Clear Salesforce Variables
+#    command:
+#    with_items:
+#     - mariadb-server
+#    register: mariadbinstalled
+
+  - name: Creating /etc/drush
+    file: path=/etc/drush state=directory owner=vagrant group=vagrant
+    register: drushdir_exists
+
+  - name: Creating tmp dir
+    file: path=/var/www/public_html/sites/default/tmp state=directory
+    register: tmp
+
+  - name: Drupal -- Copying Drush Alias
+    copy: src=drush_alias dest=/etc/drush/aliases.drushrc.php owner=vagrant group=vagrant
+    when: drushdir_exists|success
+
+  - name: Drupal -- Copying /etc/hosts
+    copy: src=hosts dest=/etc/hosts
+
+  - name: Drupal -- Copying settings.php
+    copy: src=settings.php dest=/var/www/public_html/sites/default/settings.php
+
+  - name: Drupal Drush -- copying drush install
+    copy: src=drush_install.sh dest=/usr/local/bin owner=root group=root mode=0777
+
+  - name: Install Drush
+    command: /usr/local/bin/drush_install.sh
+    become: true
+    become_user: root
+
+  - name: Link settings.php Script
+    copy: src=link.sh dest=/usr/local/bin owner=root group=root mode=0777
+
+  - name: Copy import_db script
+    copy: src=import_db.sh dest=/usr/local/bin owner=root group=root mode=0777
+
+  - name: Links
+    command: /usr/local/bin/link.sh
+    become: true
+    become_user: root
+
+  - cron: name="Drupal Cron" minute="0" hour="*/10" job="drush @vagrant.homepage core-cron > /dev/null"

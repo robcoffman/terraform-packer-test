@@ -1,0 +1,40 @@
+---
+  - name: Apache httpd Package
+    yum: pkg=httpd state=installed
+    register: httpInstalled
+
+  - name: Install ModSSL
+    yum: pkg=mod_ssl state=installed
+    register: modsslInstalled
+    when: httpInstalled|success
+
+  - name: Checking for Stock ssl.conf
+    stat: path=/etc/httpd/conf.d/ssl.conf
+    register: ssl_conf
+    when: modsslInstalled|success
+
+  - name: Renaming Stock ssl.conf
+    command: mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.dist
+    when: ssl_conf.stat.exists == True
+
+  - name: Enable Apache Event MPM
+    copy: src=00-mpm.conf dest=/etc/httpd/conf.modules.d/00-mpm.conf
+
+  - name: Copying Self Signed SSL Certificate
+    copy: src=ssl.crt dest=/etc/httpd/conf.d/ssl.crt
+    when: httpInstalled|success
+
+  - name: Copying Self Signed SSL Key
+    copy: src=ssl.key dest=/etc/httpd/conf.d/ssl.key
+    when: httpInstalled|success
+
+  - name: Enable local configuration
+    copy: src=httpd.conf dest=/etc/httpd/conf/httpd.conf
+    notify: Restart Apache
+
+  - name: Set SELinux to permissive
+    selinux: policy=targeted state=permissive
+
+  - name: Ensure Apache is started
+    when: httpInstalled|success
+    service: name=httpd state=started enabled=yes
