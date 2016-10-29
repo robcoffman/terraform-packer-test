@@ -1,6 +1,6 @@
 ---
   - name: bootstrap epel-release install
-    copy: src=roles/php/templates/ansible-bootstrap-epel.repo
+    copy: src=ansible-bootstrap-epel.repo
           dest=/etc/yum.repos.d/
           owner=root group=root mode=0644
 
@@ -16,7 +16,7 @@
           value=1
 
   - name: webstatic repo
-    copy: src=roles/php/templates/ansible-webstatic.repo
+    copy: src=ansible-webstatic.repo
           dest=/etc/yum.repos.d/
           owner=root group=root mode=0644
 
@@ -49,7 +49,7 @@
     copy: src=php.ini dest=/etc/php.ini
 
   - name: Memcached php extension install script
-    copy: src=roles/php/templates/memcache.sh dest=/usr/local/bin owner=root group=root mode=0777
+    copy: src=memcache.sh dest=/usr/local/bin owner=root group=root mode=0777
 
   - name: Install Memcache php extension
     command: /usr/local/bin/memcache.sh
@@ -57,7 +57,7 @@
     become_user: root
 
   - name: upload progress php extension install script
-    copy: src=roles/php/templates/uploadprogress.sh dest=/usr/local/bin owner=root group=root mode=0777
+    copy: src=uploadprogress.sh dest=/usr/local/bin owner=root group=root mode=0777
 
   - name: Install upload progress php extension
     command: /usr/local/bin/uploadprogress.sh

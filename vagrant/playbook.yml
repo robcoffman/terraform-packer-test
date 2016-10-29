@@ -3,7 +3,8 @@
   sudo: yes
   gather_facts: yes
   roles:
-    #- aws
+    - user
+#    - aws
     - common
     - php
     - drupal

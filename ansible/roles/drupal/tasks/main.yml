@@ -7,40 +7,56 @@
 #    register: mariadbinstalled
 
   - name: Creating /etc/drush
-    file: path=/etc/drush state=directory owner=vagrant group=vagrant
+    file: path=/etc/drush state=directory owner=centos group=centos
     register: drushdir_exists
+
+#  - name: Creating /var/www/public_html
+#    file: path=/var/www/public_html state=directory owner=apache group=apache
+#    register: drushdir_exists
+
+  - name: Drupal -- Copying DrushRC
+    copy: src=drushrc.php dest=/etc/drush/drushrc.php
+    when: drushdir_exists|success
+
+  - name: Drupal- Site Root Exists
+    stat: path=/var/www/public_html
+    register: site_root_exits
+
+  - name: Drupal- Fetch Drupal
+    get_url: url=https://ftp.drupal.org/files/projects/drupal-7.51.tar.gz dest=/tmp/drupal-7.51.tar.gz
+    when: site_root_exits.stat.exists == false
+    become: true
+    become_user: centos
+    register: fetch_drupal
+
+  - name: Untar drupal
+    unarchive: src=/tmp/drupal-7.51.tar.gz dest=/var/www/ copy=no
+    when: site_root_exits.stat.exists == false
+    register: untar drupal
+
+  - name: Create public_html
+    command: mv /var/www/drupal-7.51 /var/www/public_html
+    when: site_root_exits.stat.exists == false
+
+  #- name: Drupal -- Copying settings.php
+  #  copy: src=settings.php dest=/var/www/public_html/sites/default/settings.php
+
+  - name: Drupal Drush -- copying drush install
+    copy: src=drush_install.sh dest=/usr/local/bin owner=root group=root mode=0777
 
   - name: Creating tmp dir
     file: path=/var/www/public_html/sites/default/tmp state=directory
     register: tmp
-
-  - name: Drupal -- Copying Drush Alias
-    copy: src=drush_alias dest=/etc/drush/aliases.drushrc.php owner=vagrant group=vagrant
-    when: drushdir_exists|success
-
-  - name: Drupal -- Copying /etc/hosts
-    copy: src=hosts dest=/etc/hosts
-
-  - name: Drupal -- Copying settings.php
-    copy: src=settings.php dest=/var/www/public_html/sites/default/settings.php
-
-  - name: Drupal Drush -- copying drush install
-    copy: src=drush_install.sh dest=/usr/local/bin owner=root group=root mode=0777
 
   - name: Install Drush
     command: /usr/local/bin/drush_install.sh
     become: true
     become_user: root
 
-  - name: Link settings.php Script
-    copy: src=link.sh dest=/usr/local/bin owner=root group=root mode=0777
+  - name: Chown Public_html
+    file: dest=/var/www/public_html owner=apache group=apache recurse=yes
 
-  - name: Copy import_db script
-    copy: src=import_db.sh dest=/usr/local/bin owner=root group=root mode=0777
+  #- name: Link settings.php Script
+  #  copy: src=link.sh dest=/usr/local/bin owner=root group=root mode=0777
 
-  - name: Links
-    command: /usr/local/bin/link.sh
-    become: true
-    become_user: root
-
-  - cron: name="Drupal Cron" minute="0" hour="*/10" job="drush @vagrant.homepage core-cron > /dev/null"
+  #- cron: name="Drupal Cron" minute="0" hour="*/10" job="drush core-cron > /dev/null"

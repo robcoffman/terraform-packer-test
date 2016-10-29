@@ -3,7 +3,7 @@
     {
       "type": "amazon-ebs",
       "access_key": "KEY",
-      "secret_key": "SECRET",
+      "secret_key": "KEY",
       "communicator": "ssh" ,
       "ssh_pty" : true,
       "region": "us-west-2",
@@ -24,7 +24,6 @@
               "inline": [
                   "sleep 30",
                   "rpm -iUvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm",
-                  "yum -y update",
                   "yum -y install ansible",
                   "ansible --version"
               ]
