@@ -29,13 +29,18 @@ resource "aws_security_group" "drupal_app" {
       cidr_blocks = ["0.0.0.0/0"]
   }
 
-
-
   ingress {
       from_port = 22
       to_port = 22
       protocol = "tcp"
       cidr_blocks = ["72.201.88.232/32"]
+  }
+
+  egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags {
@@ -51,6 +56,13 @@ resource "aws_security_group" "drupal_elb" {
       from_port = 80
       to_port = 80
       protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
       cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -84,7 +96,7 @@ resource "aws_elb" "drupal_elb" {
   idle_timeout = 400
   connection_draining = true
   connection_draining_timeout = 400
-  security_groups   = ["${aws_security_group.drupal_elb.id}","${aws_security_group.drupal_app.id}"]
+  security_groups   = ["${aws_security_group.drupal_elb.id}","sg-10a41574"]
 
   tags {
     Name = "drupal-elb"
@@ -101,7 +113,7 @@ resource "aws_lb_cookie_stickiness_policy" "drupal_elb_policy" {
 
 resource "aws_launch_configuration" "drupal_conf" {
     name_prefix = "drupal-app-"
-    image_id = "ami-2cc86c4c"
+    image_id = "ami-cd41c0ad"
     instance_type = "t2.micro"
     key_name          = "CopperLeafRobCoffman1"
     security_groups   = ["${aws_security_group.drupal_app.name}"]
